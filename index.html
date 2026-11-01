@@ -566,6 +566,8 @@
     </style>
 </head>
 <body>
+<form name="resenas" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden><input name="bot-field"><input name="producto"><input name="perfume"><input name="nombre"><input name="estrellas"><textarea name="texto"></textarea></form>
+<form name="suscriptores" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden><input name="bot-field"><input name="nombre"><input name="apellido"><input name="email"><input name="consentimiento"></form>
 
     <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
@@ -700,7 +702,7 @@
                 <div class="detail-info">
                     <h4 id="det-brand"></h4>
                     <h1 id="det-title"></h1>
-                    <div style="color:#f5a623;margin-bottom:18px;font-size:16px;">★★★★★ <span id="det-reviews-badge" class="reviews-count-badge"></span></div>
+                    <div style="color:#f5a623;margin-bottom:18px;font-size:16px;"><span id="det-stars"></span> <span id="det-reviews-badge" class="reviews-count-badge"></span></div>
                     <p class="detail-price" id="det-price"></p>
                     <ul class="detail-meta">
                         <li><span>SKU:</span><span id="det-sku"></span></li>
@@ -791,7 +793,7 @@
             <div class="qv-info-col">
                 <div class="qv-brand" id="qv-brand"></div>
                 <h2 class="qv-title" id="qv-title"></h2>
-                <div class="qv-stars">★★★★★ <span style="color:#888;font-size:12px;font-weight:normal;">(7 reseñas)</span><a href="#" onclick="irADetallesDesdeQV();return false;">Ver detalles completos</a></div>
+                <div class="qv-stars"><a href="#" onclick="irADetallesDesdeQV();return false;">Ver detalles completos</a></div>
                 <div class="qv-price" id="qv-price"></div>
                 <ul class="qv-meta">
                     <li><span>SKU:</span><b id="qv-sku" style="font-weight:normal;"></b></li>
@@ -842,7 +844,7 @@
             <button class="close-modal" onclick="cerrarModal('discountModal')">✕</button>
             <h2>Obtén 10% OFF en tu perfume</h2>
             <p>Descuento exclusivo solo para nuevos clientes</p>
-            <input type="text" placeholder="Nombre"><input type="text" placeholder="Apellido"><input type="email" placeholder="Email">
+            <input type="text" id="dsc-nombre" placeholder="Nombre"><input type="text" id="dsc-apellido" placeholder="Apellido"><input type="email" id="dsc-email" placeholder="Email">
             <div class="discount-check"><input type="checkbox" id="marketingCheck"><label for="marketingCheck">Acepto recibir correos electrónicos de marketing ocasionales.</label></div>
             <button class="discount-btn" onclick="activarDescuento()">Activar Descuento</button>
         </div>
@@ -864,7 +866,13 @@
     const itemsPerPage = 25;
     let currentFilteredProds = [];
     let galleryState = { qv: 0, detail: 0 };
-    let reviewsDB = {};
+    // ===== RESEÑAS APROBADAS =====
+    // Las reseñas nuevas te llegan a Netlify (Forms). Si te gusta una, cópiala aquí:
+    // { producto: 15, nombre: "Nombre", estrellas: 5, texto: "Su opinión", fecha: "Noviembre 2026" },
+    // "producto" es el id del perfume en catalogo.js.
+    const RESENAS_APROBADAS = [
+    ];
+    const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
     function mostrarToast(mensaje, tipo = 'info') {
         const c = document.getElementById('toastContainer');
@@ -884,7 +892,17 @@
     });
 
     setTimeout(() => { if (!sessionStorage.getItem('discountShown')) { abrirModal('discountModal'); sessionStorage.setItem('discountShown', 'true'); } }, 12000);
-    function activarDescuento() { mostrarToast('Descuento activado: VITANOVA10', 'success'); cerrarModal('discountModal'); }
+    const LS = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+    const descuentoPct = () => LS.get('vn_desc') === 'VITANOVA10' ? 0.10 : 0;
+    function activarDescuento() {
+        const nombre = document.getElementById('dsc-nombre').value.trim(), apellido = document.getElementById('dsc-apellido').value.trim(), email = document.getElementById('dsc-email').value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { mostrarToast('Escribe un correo válido', 'error'); return; }
+        if (!document.getElementById('marketingCheck').checked) { mostrarToast('Acepta recibir correos para activar tu descuento', 'error'); return; }
+        const datos = new URLSearchParams({ 'form-name': 'suscriptores', 'bot-field': '', nombre, apellido, email, consentimiento: 'si' });
+        fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: datos.toString() })
+            .then(r => { if (!r.ok) throw new Error(r.status); LS.set('vn_desc', 'VITANOVA10'); actualizarCarritoUI(); mostrarToast('¡Listo! Descuento VITANOVA10 activado: 10% OFF en tu pedido', 'success'); cerrarModal('discountModal'); })
+            .catch(() => mostrarToast('No se pudo registrar tu correo, intenta de nuevo', 'error'));
+    }
 
     document.getElementById('hamburgerBtn').addEventListener('click', function() { this.classList.toggle('active'); const nav = document.getElementById('mainNav'); nav.classList.toggle('mobile-open'); this.setAttribute('aria-expanded', nav.classList.contains('mobile-open')); });
     function toggleMobileSidebar() { const s = document.getElementById('sidebar'); s.classList.toggle('mobile-open'); document.querySelector('.mobile-filter-toggle').setAttribute('aria-expanded', s.classList.contains('mobile-open')); }
@@ -980,7 +998,7 @@
             <div class="img-wrap"><img src="${getMainImage(prod)}" alt="${prod.nombre}" loading="lazy"><button class="vista-rapida-btn" onclick="abrirVistaRapida(event,${prod.id})">Vista Rápida</button></div>
             <div class="prod-brand">${prod.marca}</div><h3 class="prod-name">${prod.nombre}</h3>
             <div class="prod-price">$${prod.precio.toLocaleString('es-MX')}.00</div>
-            <div class="prod-stars">★★★★★</div>
+            
             <button class="btn-add-card" onclick="agregarDesdeGrid(event,${prod.id})" ${!prod.enStock?'disabled class="btn-add-card disabled"':''}>${prod.enStock?'Añadir al Carrito':'Agotado'}</button>
         </div>`;
     }
@@ -1133,10 +1151,12 @@
     }
 
     function renderizarResenas(prodId) {
-        const reviews = reviewsDB[prodId] || [];
-        const count = reviews.length + 2; 
+        const reviews = RESENAS_APROBADAS.filter(r => r.producto === prodId);
+        const count = reviews.length;
 
-        document.getElementById('det-reviews-badge').textContent = `(${count} reseñas)`;
+        const prom = count ? Math.round(reviews.reduce((a, r) => a + r.estrellas, 0) / count) : 0;
+        const starsEl = document.getElementById('det-stars'); if (starsEl) starsEl.textContent = '★'.repeat(prom);
+        document.getElementById('det-reviews-badge').textContent = count ? `(${count} reseña${count>1?'s':''})` : '(Sin reseñas aún)';
         document.getElementById('tab-reviews-btn').textContent = `Reseñas (${count})`;
 
         const formContainer = document.getElementById('reviewsFormContainer');
@@ -1163,18 +1183,16 @@
                     <label for="review-text">Tu opinión</label>
                     <textarea id="review-text" placeholder="Cuéntanos tu experiencia con este perfume..."></textarea>
                 </div>
-                <button class="btn-submit-review" onclick="enviarResena(${prodId})">Publicar Reseña</button>
+                <button class="btn-submit-review" onclick="enviarResena(${prodId})">Enviar Reseña</button>
             </div>
         `;
 
         const listContainer = document.getElementById('reviewsListContainer');
-        let html = '';
-        html += `<div class="review-box"><div class="review-header"><strong>Carlos M.</strong><span class="review-date">Hace 2 semanas</span></div><div style="color:#f5a623;font-size:14px;">★★★★★</div><p class="review-text">Excelente perfume, dura todo el día en piel. La proyección es brutal, totalmente original.</p></div>`;
-        html += `<div class="review-box"><div class="review-header"><strong>Andrea R.</strong><span class="review-date">Hace 1 mes</span></div><div style="color:#f5a623;font-size:14px;">★★★★★</div><p class="review-text">Compré a ciegas y me encantó. La presentación del empaque es de lujo.</p></div>`;
+        let html = count ? '' : '<p style="color:#888;padding:10px 0;">Aún no hay reseñas de este perfume. ¡Sé el primero en opinar!</p>';
 
         reviews.forEach(r => {
             const stars = '★'.repeat(r.estrellas) + '☆'.repeat(5 - r.estrellas);
-            html += `<div class="review-box"><div class="review-header"><strong>${r.nombre}</strong><span class="review-date">${r.fecha}</span></div><div style="color:#f5a623;font-size:14px;">${stars}</div><p class="review-text">${r.texto}</p></div>`;
+            html += `<div class="review-box"><div class="review-header"><strong>${esc(r.nombre)}</strong><span class="review-date">${esc(r.fecha)}</span></div><div style="color:#f5a623;font-size:14px;">${stars}</div><p class="review-text">${esc(r.texto)}</p></div>`;
         });
 
         listContainer.innerHTML = html;
@@ -1191,15 +1209,11 @@
         if (texto.length < 10) { mostrarToast('Tu reseña es muy corta, escribe al menos 10 caracteres', 'error'); return; }
 
         const estrellas = parseInt(ratingEl.value);
-        const hoy = new Date();
-        const fecha = `Hace ${hoy.getDate()} de ${hoy.toLocaleDateString('es-MX', { month: 'long' })}`;
-
-        if (!reviewsDB[prodId]) reviewsDB[prodId] = [];
-        reviewsDB[prodId].unshift({ nombre, estrellas, texto, fecha });
-
-        renderizarResenas(prodId);
-        mostrarToast('Reseña publicada correctamente', 'success');
-        document.getElementById('reviewsFormContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const prod = productos.find(p => p.id === prodId);
+        const datos = new URLSearchParams({ 'form-name': 'resenas', 'bot-field': '', producto: prodId, perfume: prod ? prod.nombre : '', nombre, estrellas, texto });
+        fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: datos.toString() })
+            .then(r => { if (!r.ok) throw new Error(r.status); document.getElementById('review-name').value = ''; document.getElementById('review-text').value = ''; mostrarToast('¡Gracias! Tu reseña se publicará en cuanto la revisemos', 'success'); })
+            .catch(() => mostrarToast('No se pudo enviar tu reseña, intenta de nuevo', 'error'));
     }
 
     function agregarDesdeGrid(e, prodId) { if (e) e.stopPropagation(); const prod = productos.find(p => p.id === prodId); if (!prod || !prod.enStock) return; agregarAlCarrito(prod, 1); }
@@ -1236,8 +1250,9 @@
             });
             c.appendChild(frag);
         }
-        const total = carrito.reduce((a, i) => a + i.precio * i.cantidad, 0);
-        document.getElementById('cartTotalValue').textContent = `$${total.toLocaleString('es-MX')}.00 MXN`;
+        const sub = carrito.reduce((a, i) => a + i.precio * i.cantidad, 0), pct = descuentoPct(), total = Math.round(sub * (1 - pct));
+        document.getElementById('cartTotalValue').textContent = `$${total.toLocaleString('es-MX')}.00 MXN` + (pct && sub ? ' (-10%)' : '');
+        LS.set('vn_cart', JSON.stringify(carrito.map(i => ({ id: i.id, cantidad: i.cantidad }))));
     }
     function toggleCart(forceOpen) {
         const sidebar = document.getElementById('cartSidebar'); const overlay = document.getElementById('cartOverlay');
@@ -1248,13 +1263,14 @@
     }
     function procederPago() {
         if (!carrito.length) { mostrarToast('Tu bolsa está vacía', 'error'); return; }
-        const total = carrito.reduce((t, i) => t + i.precio * i.cantidad, 0);
+        const sub = carrito.reduce((t, i) => t + i.precio * i.cantidad, 0), pct = descuentoPct(), total = Math.round(sub * (1 - pct));
         const lineas = carrito.map(i => `- ${i.cantidad} x ${i.nombre} ($${(i.precio * i.cantidad).toLocaleString('es-MX')} MXN)`).join('\n');
-        const msg = `Hola Vita Nova, quiero hacer este pedido:\n${lineas}\nTotal: $${total.toLocaleString('es-MX')} MXN`;
+        const msg = `Hola Vita Nova, quiero hacer este pedido:\n${lineas}${pct ? `\nCódigo VITANOVA10 (-10%)` : ''}\nTotal: $${total.toLocaleString('es-MX')} MXN`;
         window.open('https://wa.me/528136951078?text=' + encodeURIComponent(msg), '_blank', 'noopener');
     }
 
     generarFiltrosMarca();
+    try { (JSON.parse(LS.get('vn_cart') || '[]')).forEach(x => { const p = productos.find(q => q.id === x.id); if (p && p.enStock && x.cantidad > 0) carrito.push({ ...p, cantidad: x.cantidad }); }); if (carrito.length) actualizarCarritoUI(); } catch (e) {}
     irAInicio(); 
     </script>
 </body>
