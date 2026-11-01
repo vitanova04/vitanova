@@ -563,7 +563,63 @@
         }
         @media (max-width: 480px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } .grid-header { flex-direction: column; align-items: flex-start; } .gallery-thumb { width: 48px; height: 48px; } }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } .marquee-content { animation: none; } .brand-track { animation: none; } .parallax-banner { background-attachment: scroll; } }
-    </style>
+    
+/* ===== Vita Nova: cambios extra ===== */
+/* carrito móvil */
+.cart-sidebar{height:100vh;height:100dvh}
+.cart-items{min-height:0}
+.cart-footer{flex-shrink:0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+/* sesión / cuenta */
+.nav-account{display:none}
+.mi-cuenta-btn{cursor:pointer;font-weight:600;font-size:13px;border:1px solid #000;padding:8px 14px;border-radius:var(--radius-sm);display:inline-block;color:#000}
+.mi-cuenta-btn:hover{background:#000;color:#fff}
+.header-middle.logged{grid-template-columns:auto 1fr auto}
+.header-middle.logged .header-logo{order:-1;justify-content:flex-start}
+.header-middle.logged .header-logo img{height:72px}
+.header-middle.logged .search-container{justify-self:center;max-width:480px}
+.aviso-cuentas{font-size:11px;color:#666;background:#f6f6f6;border-radius:var(--radius-sm);padding:10px;margin:4px 0 14px;text-align:left;line-height:1.5}
+#account-view{padding:48px 5%;max-width:1200px;margin:auto}
+.acc-layout{display:flex;gap:56px}
+.acc-menu{width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:20px;padding-top:14px}
+.acc-menu a{cursor:pointer;font-size:14px}.acc-menu a.active{font-weight:700}
+.acc-main{flex:1;min-width:0}
+.acc-main h1{font-size:34px;font-weight:500}
+.acc-main hr{border:0;border-top:1px solid var(--color-border);margin:18px 0}
+.acc-empty{text-align:center;padding:60px 0 20px}.acc-empty p{font-size:18px;font-weight:500;margin-bottom:20px}
+.acc-btn{background:#000;color:#fff;border:0;border-radius:30px;padding:16px 34px;font-weight:700;cursor:pointer;font-family:var(--font-main)}
+.acc-note{text-align:center;font-size:12px;color:var(--color-muted);max-width:480px;margin:10px auto}
+.acc-main .grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+/* detalle de producto */
+.detail-meta{display:none}
+.acc{border-top:1px solid var(--color-border);margin-top:18px;padding:14px 0}
+.acc summary{cursor:pointer;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.acc p{font-size:13px;color:#555;line-height:1.7;margin-top:12px}
+.spec-row{display:flex;justify-content:space-between;gap:20px;padding:12px 0;font-size:13px}
+.spec-row span{color:#555;text-align:right}
+@media(min-width:769px){
+ #detailGalleryContainer .gallery-container{flex-direction:row-reverse;align-items:flex-start}
+ #detailGalleryContainer .gallery-main-wrap{flex:1}
+ #detailGalleryContainer .gallery-thumbs{flex-direction:column;flex-wrap:nowrap}
+}
+/* footer */
+footer .foot-col h4,footer h2{color:#fff!important}
+.ft-news{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;padding-bottom:32px;margin-bottom:32px;border-bottom:1px solid #222}
+.ft-news h3{font-size:18px;font-weight:600}.ft-news p{font-size:13px;color:#bbb}
+.ft-news form{display:flex;background:#fff;border-radius:30px;overflow:hidden;width:100%;max-width:380px}
+.ft-news input{flex:1;border:0;padding:12px 18px;font-family:var(--font-main);outline:0;min-width:0}
+.ft-news button{background:#000;color:#fff;border:0;width:44px;margin:4px;border-radius:50%;cursor:pointer}
+.ft-news small{width:100%;font-size:11px;color:#888}.ft-news small a{color:#bbb}
+@media(max-width:768px){
+ .nav-account{display:block}
+ .main-nav:not(.mobile-open) .nav-account{display:none}
+ .header-middle.logged .hamburger{order:-2}
+ .header-middle.logged .header-logo img{height:52px;max-width:120px}
+ .header-middle.logged .user-greeting{display:block}
+ .header-middle.logged .search-container{max-width:none;justify-self:stretch}
+ .acc-layout{flex-direction:column;gap:20px}
+ .acc-menu{flex-direction:row;width:100%;overflow-x:auto;white-space:nowrap;gap:18px;padding-bottom:6px}
+}
+</style>
 </head>
 <body>
 <form name="resenas" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden><input name="bot-field"><input name="producto"><input name="perfume"><input name="nombre"><input name="estrellas"><textarea name="texto"></textarea></form>
@@ -1273,5 +1329,137 @@
     try { (JSON.parse(LS.get('vn_cart') || '[]')).forEach(x => { const p = productos.find(q => q.id === x.id); if (p && p.enStock && x.cantidad > 0) carrito.push({ ...p, cantidad: x.cantidad }); }); if (carrito.length) actualizarCarritoUI(); } catch (e) {}
     irAInicio(); 
     </script>
+<script>
+let sesion=null;
+const AVISO='Las cuentas aún se están terminando de habilitar. No necesitas iniciar sesión para comprar: arma tu bolsa y envía tu pedido por WhatsApp.';
+const favGet=()=>{try{return JSON.parse(LS.get('vn_favs')||'[]')}catch(e){return[]}};
+const favSave=()=>LS.set('vn_favs',JSON.stringify(favoritos));
+favoritos=favGet();
+try{const u=JSON.parse(LS.get('vn_user')||'null');if(u){sesion=u;usuarioLogueado=true}}catch(e){}
+
+/* ---- favoritos sin login ---- */
+function toggleFav(e,btn,id){
+ if(e)e.stopPropagation();
+ const i=favoritos.indexOf(id);
+ if(i<0){favoritos.push(id);btn.innerText='🩷';btn.classList.add('active');mostrarToast('Agregado a favoritos','success')}
+ else{favoritos.splice(i,1);btn.innerText='🤍';btn.classList.remove('active')}
+ favSave();
+}
+function toggleFavQuickView(){
+ if(!productoActual)return;
+ const b=document.getElementById('qv-btn-fav'),i=favoritos.indexOf(productoActual.id);
+ if(i<0){favoritos.push(productoActual.id);b.innerHTML='🩷 Quitar';mostrarToast('Agregado a favoritos','success')}
+ else{favoritos.splice(i,1);b.innerHTML='🤍 Wishlist'}
+ favSave();
+}
+function abrirFavoritos(){
+ const c=document.getElementById('favListContainer');c.innerHTML='';
+ const l=favoritos.map(id=>productos.find(x=>x.id===id)).filter(Boolean);
+ if(!l.length)c.innerHTML='<div class="empty-state"><div class="empty-icon">🖤</div><p>Aún no tienes perfumes en favoritos.</p></div>';
+ l.forEach(p=>{const d=document.createElement('div');d.className='fav-item';d.onclick=()=>{cerrarModal('favoritosModal');abrirVistaRapida(null,p.id)};
+  d.innerHTML=`<img src="${getMainImage(p)}" alt="${esc(p.nombre)}"><div class="fav-item-info"><div class="fav-item-name">${esc(p.nombre)}</div><div class="fav-item-price">$${p.precio.toLocaleString('es-MX')}.00</div></div><button class="remove-fav" onclick="quitarFav(event,${p.id})">Quitar</button>`;c.appendChild(d)});
+ abrirModal('favoritosModal');
+}
+function quitarFav(e,id){e.stopPropagation();favoritos=favoritos.filter(x=>x!==id);favSave();abrirFavoritos()}
+
+/* ---- vistas (agrega account-view) ---- */
+function switchView(id){
+ ['home-view','catalog-view','product-detail-view','account-view'].forEach(v=>{const el=document.getElementById(v);
+  if(v===id){el.style.display='block';requestAnimationFrame(()=>el.classList.add('visible'))}
+  else{el.classList.remove('visible');setTimeout(()=>{if(!el.classList.contains('visible'))el.style.display='none'},350)}});
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+const av=document.createElement('section');av.id='account-view';av.className='view';document.querySelector('main').appendChild(av);
+
+/* ---- sesión ---- */
+function simularLoginExitoso(modalId){
+ const m=document.getElementById(modalId),em=m.querySelector('input[type=email]').value.trim(),t=m.querySelector('input[type=text]');
+ sesion={nombre:(t&&t.value.trim())||(em?em.split('@')[0]:'Cliente'),email:em};
+ LS.set('vn_user',JSON.stringify(sesion));usuarioLogueado=true;cerrarModal(modalId);pintarSesion();mostrarToast('Sesión iniciada','success');
+}
+function simularLogout(){
+ usuarioLogueado=false;sesion=null;LS.set('vn_user','');pintarSesion();cerrarMenuMovil();
+ if(av.classList.contains('visible'))irAInicio();
+ mostrarToast('Sesión cerrada','info');
+}
+function pintarSesion(){
+ const h=document.querySelector('.header-middle'),g=document.getElementById('userGreetingArea'),ul=document.querySelector('#mainNav > ul');
+ h.classList.toggle('logged',usuarioLogueado);
+ ul.querySelectorAll('.nav-account').forEach(x=>x.remove());
+ const it=usuarioLogueado
+  ?[['Pedidos',"irACuenta('pedidos')"],['Direcciones',"irACuenta('direcciones')"],['Cuenta',"irACuenta('cuenta')"],['Lista de deseos',"irACuenta('deseos')"],['Cerrar sesión','simularLogout()']]
+  :[['Iniciar sesión',"cerrarMenuMovil();abrirModal('loginModal')"],['Registrarse',"cerrarMenuMovil();abrirModal('registerModal')"]];
+ it.forEach(([t,f])=>{const li=document.createElement('li');li.className='nav-account';li.innerHTML=`<a onclick="${f}">${t}</a>`;ul.appendChild(li)});
+ g.innerHTML=usuarioLogueado
+  ?`<a class="mi-cuenta-btn" onclick="irACuenta('pedidos')">Mi Cuenta</a>`
+  :`<strong>¡HOLA!</strong><br><a href="#" onclick="abrirModal('loginModal');return false;">Iniciar sesión</a> o <a href="#" onclick="abrirModal('registerModal');return false;">Registrarse</a>`;
+}
+['loginModal','registerModal'].forEach(id=>document.querySelector('#'+id+' .submit-btn').insertAdjacentHTML('beforebegin',`<p class="aviso-cuentas">ℹ️ ${AVISO}</p>`));
+
+/* ---- página Mi Cuenta ---- */
+function irACuenta(sec){
+ if(!usuarioLogueado){abrirModal('loginModal');return}
+ renderCuenta(sec||'pedidos');switchView('account-view');cerrarMenuMovil();
+}
+function renderCuenta(sec){
+ const T={pedidos:'Pedidos',direcciones:'Direcciones',cuenta:'Cuenta',deseos:'Listas de deseos'};
+ const vacio=(txt,btn)=>`<div class="acc-empty"><p>${txt}</p>${btn?'<button class="acc-btn" onclick="irACatalogoCompleto()">Comprar ahora</button>':''}</div>`;
+ let b='';
+ if(sec==='pedidos')b=vacio('No tienes ningún pedido',1)+'<p class="acc-note">Por ahora los pedidos se confirman por WhatsApp, por eso aquí aún no aparece historial.</p>';
+ else if(sec==='direcciones')b=vacio('Aún no tienes direcciones guardadas')+'<p class="acc-note">Tu dirección de envío la compartes por WhatsApp al confirmar tu pedido.</p>';
+ else if(sec==='cuenta')b=`<ul class="detail-meta" style="display:block"><li><span>Nombre:</span>${esc(sesion.nombre)}</li><li><span>Correo:</span>${esc(sesion.email||'—')}</li></ul><p class="acc-note">${AVISO}</p>`;
+ else{const l=favoritos.map(id=>productos.find(x=>x.id===id)).filter(Boolean);b=l.length?`<div class="grid">${l.map(p=>crearTarjetaHTML(p)).join('')}</div>`:vacio('Aún no tienes perfumes en favoritos',1)}
+ av.innerHTML=`<div class="acc-layout"><nav class="acc-menu">${Object.keys(T).map(k=>`<a class="${k===sec?'active':''}" onclick="renderCuenta('${k}')">${T[k]}</a>`).join('')}<a onclick="simularLogout()">Cerrar sesión</a></nav><div class="acc-main"><h1>${T[sec]}</h1><hr>${b}</div></div>`;
+}
+
+/* ---- detalle: especificaciones + relacionados ---- */
+const _abrirDetalle=abrirDetalle;
+abrirDetalle=function(id){_abrirDetalle(id);mejorarDetalle()};
+function mejorarDetalle(){
+ const p=productoActual;if(!p)return;
+ let ex=document.getElementById('det-extra');
+ if(!ex){ex=document.createElement('div');ex.id='det-extra';document.querySelector('.detail-info').appendChild(ex)}
+ const f=(a,b)=>`<div class="spec-row"><b>${a}</b><span>${esc(b)}</span></div>`;
+ ex.innerHTML=`<details class="acc" open><summary>Especificaciones</summary>${f('SKU',p.sku)}${f('Marca',p.marca)}${f('Género',p.genero||'Unisex')}${f('Tipo',p.tipo||'—')}${f('Categoría',p.categoria||'—')}${f('Disponibilidad',p.enStock?'En stock':'Agotado')}</details><details class="acc"><summary>Envíos y devoluciones</summary><p>Enviamos a todo México. Envío gratis en compras mayores a $4,000 MXN. Para cualquier duda sobre tu pedido escríbenos por WhatsApp al 8136951078.</p></details>`;
+ let rel=document.getElementById('det-related');
+ if(!rel){rel=document.createElement('div');rel.id='det-related';document.querySelector('#product-detail-view .tabs').after(rel)}
+ const r=[...productos.filter(x=>x.id!==p.id&&x.marca===p.marca),...productos.filter(x=>x.id!==p.id&&x.marca!==p.marca&&x.categoria===p.categoria&&x.genero===p.genero)].slice(0,8);
+ rel.innerHTML=r.length?`<h2 class="section-title" style="text-align:left;margin:48px 0 12px">Productos relacionados</h2><div class="product-carousel" style="padding:10px 0 30px">${r.map(x=>crearTarjetaHTML(x,'carousel-card')).join('')}</div>`:'';
+}
+
+/* ---- filtros por categoría (menú Catálogo y footer) ---- */
+function filtrarCatGen(cat,gen){
+ document.getElementById('headerSearchInput').value='';mostrarCatalogo();
+ document.querySelectorAll('.sidebar input[type=checkbox]').forEach(cb=>{cb.checked=(cb.classList.contains('cat-filter')&&cb.value===cat)||(gen&&cb.classList.contains('gen-filter')&&cb.value===gen)});
+ aplicarFiltrosOrden();setTimeout(()=>document.getElementById('catalog-view').scrollIntoView({behavior:'smooth'}),200);
+}
+document.querySelectorAll('.catalogo-col').forEach((c,i)=>c.querySelectorAll('a').forEach(a=>{const g=a.textContent.trim();a.onclick=()=>filtrarCatGen(['Árabes','Nicho','Diseñador'][i],g)}));
+
+/* ---- footer estilo Magna ---- */
+function pintarFooter(){
+ const marcas=[...new Set(productos.map(p=>p.marca))].sort().slice(0,8);
+ document.getElementById('contacto').innerHTML=`
+ <div class="ft-news"><div><h3>Mantente al día con nuestras fragancias</h3><p>Sé el primero en conocer novedades, lanzamientos y descuentos exclusivos.</p></div>
+  <form onsubmit="suscribirFooter(event)"><input type="email" id="ft-email" placeholder="Suscríbete con tu correo" required><button aria-label="Suscribirme">→</button></form>
+  <small>Al suscribirte aceptas recibir correos de marketing. Consulta el <a href="privacidad.html">Aviso de Privacidad</a>.</small></div>
+ <div class="footer-cols">
+  <div class="foot-col" style="max-width:260px"><h2 style="font-size:24px;margin-bottom:10px">VITA NOVA</h2><p style="font-size:13px;color:#bbb;line-height:1.6">Fragancias exclusivas de diseñador, nicho y alta gama. Tu esencia es tu mejor carta de presentación.</p></div>
+  <div class="foot-col"><h4>Categorías</h4><ul><li onclick="filtrarPorGeneroDirecto('Hombre')">Perfumes hombre</li><li onclick="filtrarPorGeneroDirecto('Mujer')">Perfumes mujer</li><li onclick="filtrarCatGen('Árabes')">Perfumes árabes</li><li onclick="filtrarPorGeneroDirecto('Unisex')">Unisex</li></ul></div>
+  <div class="foot-col"><h4>Marcas</h4><ul>${marcas.map(m=>`<li onclick="filtrarPorMarca('${m.replace(/'/g,"\\'")}')">${esc(m)}</li>`).join('')}</ul></div>
+  <div class="foot-col"><h4>Conócenos</h4><ul><li onclick="window.scrollTo({top:0,behavior:'smooth'})">Cómo comprar: arma tu bolsa y pide por WhatsApp</li><li><a href="privacidad.html" style="color:inherit;text-decoration:none">Aviso de Privacidad</a></li></ul></div>
+  <div class="foot-col"><h4>Contáctanos</h4><ul><li>WhatsApp: 8136951078</li><li><a href="mailto:contacto.vitanova04@gmail.com" style="color:inherit">contacto.vitanova04@gmail.com</a></li><li>Sonora, México</li></ul></div>
+ </div>
+ <div class="footer-bottom">&copy; 2026 Vita Nova Perfumes. Todos los derechos reservados.</div>`;
+}
+function suscribirFooter(e){
+ e.preventDefault();const email=document.getElementById('ft-email').value.trim();
+ const d=new URLSearchParams({'form-name':'suscriptores','bot-field':'',nombre:'',apellido:'',email,consentimiento:'si (footer)'});
+ fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:d.toString()})
+  .then(r=>{if(!r.ok)throw 0;e.target.reset();mostrarToast('¡Listo! Ya estás suscrito','success')})
+  .catch(()=>mostrarToast('No se pudo suscribir, intenta de nuevo','error'));
+}
+
+pintarSesion();pintarFooter();irAInicio();
+</script>
 </body>
 </html>
