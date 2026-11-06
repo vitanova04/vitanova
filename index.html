@@ -624,10 +624,10 @@ footer{background:#050505;padding:64px 0 30px;border-top:1px solid var(--line)}
 
     <div class="promo-banner" id="promoBanner">
       <div class="in reveal">
-        <small>Oferta de temporada</small>
-        <h2 id="pbTitle"></h2>
-        <p>Mezcla las fragancias que quieras. El descuento se aplica automáticamente en tu bolsa.</p>
-        <button class="btn" onclick="verCatalogo()">Armar mi combo</button>
+        <small>Vita Nova Perfumería</small>
+        <h2>Esencia y sofisticación</h2>
+        <p>Encuentra el aroma que hablará por ti antes de que digas una palabra.</p>
+        <button class="btn" onclick="verCatalogo()">Ver catálogo</button>
       </div>
     </div>
 
@@ -809,8 +809,7 @@ footer{background:#050505;padding:64px 0 30px;border-top:1px solid var(--line)}
 const CFG={
   WA:'528136951078', WA_TXT:'8136951078',
   EMAIL:'contacto.vitanova04@gmail.com',
-  ENVIO_GRATIS:1490,          // envío gratis desde (MXN)
-  PROMO_N:3, PROMO_PCT:0.20,  // 20% OFF al llevar 3 perfumes
+  ENVIO_GRATIS:4000,          // envío gratis desde (MXN)
   CODIGO:'VITANOVA10', CODIGO_PCT:0.10,
   POR_PAGINA:24
 };
@@ -994,7 +993,7 @@ function pintarMenuMovil(){
 function iniciarAnuncios(){
   const msgs=[
     `Envío gratis desde ${money0(CFG.ENVIO_GRATIS)} MXN`,
-    `${Math.round(CFG.PROMO_PCT*100)}% OFF en la compra de ${CFG.PROMO_N} perfumes`,
+    `Suscríbete y obtén ${Math.round(CFG.CODIGO_PCT*100)}% OFF en tu primer perfume`,
     'Perfumes 100% originales · Pedidos por WhatsApp'
   ];
   const box=$('#announce');
@@ -1043,9 +1042,8 @@ function fillGrid(el,list,extra){el.innerHTML=list.map(p=>card(p,extra)).join(''
    ========================================================= */
 function renderHome(){
   $('#stripShip').textContent=`Gratis desde ${money0(CFG.ENVIO_GRATIS)} MXN`;
-  $('#stripPromoT').textContent=`${Math.round(CFG.PROMO_PCT*100)}% OFF en ${CFG.PROMO_N}`;
-  $('#stripPromoD').textContent='Llévate 3 perfumes y ahorra';
-  $('#pbTitle').innerHTML=`Compra ${CFG.PROMO_N} perfumes<br>y llévate ${Math.round(CFG.PROMO_PCT*100)}% OFF`;
+  $('#stripPromoT').textContent=`${Math.round(CFG.CODIGO_PCT*100)}% OFF primera compra`;
+  $('#stripPromoD').textContent='Con tu código de bienvenida';
   $('#promoBanner').style.backgroundImage=`url(${IMGS.jpg})`;
 
   // marcas (top por cantidad de perfumes)
@@ -1083,18 +1081,14 @@ function pintarHomeGrid(){
   reveal();
 }
 function pintarResenasHome(){
-  const t=$('#revTrack'),sub=$('#revSub');
-  if(RESENAS_APROBADAS.length){
-    sub.textContent='Opiniones reales de quienes ya compraron';
-    t.innerHTML=RESENAS_APROBADAS.map(r=>{
-      const p=byId(r.producto);
-      return `<div class="rev"><div class="st">${'★'.repeat(r.estrellas)}${'☆'.repeat(5-r.estrellas)}</div><p>“${esc(r.texto)}”</p><div class="who"><i>${esc(r.nombre.charAt(0).toUpperCase())}</i><div><b>${esc(r.nombre)}</b>${p?esc(p.nombre)+' · ':''}${esc(r.fecha||'')}</div></div></div>`;
-    }).join('');
-  }else{
-    sub.textContent='Nuestra promesa contigo (muy pronto, tus reseñas aquí)';
-    const prom=[['💯','Perfumes 100% originales','Sellados de fábrica y de distribuidores autorizados. Si no es original, no lo vendemos.'],['⚡','Atención rápida','Te respondemos por WhatsApp para confirmar disponibilidad, forma de pago y envío.'],['📦','Envío cuidadoso','Cada pedido se empaca con cuidado para que tu perfume llegue perfecto.'],['🖤','Asesoría personalizada','¿No sabes cuál elegir? Cuéntanos qué te gusta y te recomendamos.']];
-    t.innerHTML=prom.map(x=>`<div class="rev"><div style="font-size:28px">${x[0]}</div><b style="font-family:var(--f-title);letter-spacing:1px;font-size:14px">${x[1]}</b><p>${x[2]}</p><div class="who"><span>¿Ya compraste? Deja tu reseña en la página de tu perfume.</span></div></div>`).join('');
-  }
+  const sec=$('#resenasHome'),t=$('#revTrack');
+  if(!RESENAS_APROBADAS.length){sec.style.display='none';return}
+  sec.style.display='';
+  $('#revSub').textContent='Opiniones reales de quienes ya compraron';
+  t.innerHTML=RESENAS_APROBADAS.map(r=>{
+    const p=byId(r.producto);
+    return `<div class="rev"><div class="st">${'★'.repeat(r.estrellas)}${'☆'.repeat(5-r.estrellas)}</div><p>“${esc(r.texto)}”</p><div class="who"><i>${esc(r.nombre.charAt(0).toUpperCase())}</i><div><b>${esc(r.nombre)}</b>${p?esc(p.nombre)+' · ':''}${esc(r.fecha||'')}</div></div></div>`;
+  }).join('');
 }
 function slideRev(d){const t=$('#revTrack');t.scrollBy({left:d*360,behavior:'smooth'})}
 
@@ -1309,10 +1303,8 @@ function totales(){
   const items=carrito.map(i=>({...byId(i.id),cantidad:i.cantidad})).filter(i=>i.id);
   const sub=items.reduce((a,i)=>a+i.precio*i.cantidad,0);
   const units=items.reduce((a,i)=>a+i.cantidad,0);
-  const pPromo=units>=CFG.PROMO_N?CFG.PROMO_PCT:0;
-  const pCod=LS.get('vn_desc')===CFG.CODIGO?CFG.CODIGO_PCT:0;
-  const pct=Math.max(pPromo,pCod);
-  const label=pct===0?'':(pPromo>=pCod?`${Math.round(pPromo*100)}% OFF por ${CFG.PROMO_N} perfumes`:`Código ${CFG.CODIGO} (-${Math.round(pCod*100)}%)`);
+  const pct=LS.get('vn_desc')===CFG.CODIGO?CFG.CODIGO_PCT:0;
+  const label=pct?`Código ${CFG.CODIGO} (-${Math.round(pct*100)}%)`:'';
   const desc=Math.round(sub*pct);
   return{items,sub,units,pct,label,desc,total:sub-desc};
 }
@@ -1337,8 +1329,7 @@ function pintarCarrito(){
   $$('[data-cartcount-txt]').forEach(b=>b.textContent=t.units);
   // barra de envío gratis
   const falta=Math.max(0,CFG.ENVIO_GRATIS-t.total),pctBar=Math.min(100,t.total/CFG.ENVIO_GRATIS*100);
-  const faltanP=Math.max(0,CFG.PROMO_N-t.units);
-  $('#shipBox').innerHTML=`<p>${t.items.length===0?`Envío gratis desde <b>${money0(CFG.ENVIO_GRATIS)} MXN</b>`:(falta>0?`Te faltan <b>${money(falta)}</b> para envío gratis`:'🎉 ¡Tienes <b>envío gratis</b>!')}</p><div class="bar ${falta===0&&t.items.length?'done':''}"><i style="width:${t.items.length?pctBar:0}%"></i></div><div class="promo-line">${t.units===0?`${Math.round(CFG.PROMO_PCT*100)}% OFF al llevar ${CFG.PROMO_N} perfumes`:(faltanP>0?`Agrega <b>${faltanP}</b> perfume${faltanP>1?'s':''} más y obtén <b>${Math.round(CFG.PROMO_PCT*100)}% OFF</b>`:`✓ <b>${Math.round(CFG.PROMO_PCT*100)}% OFF</b> aplicado`)}</div>`;
+  $('#shipBox').innerHTML=`<p>${t.items.length===0?`Envío gratis desde <b>${money0(CFG.ENVIO_GRATIS)} MXN</b>`:(falta>0?`Te faltan <b>${money(falta)}</b> para envío gratis`:'🎉 ¡Tienes <b>envío gratis</b>!')}</p><div class="bar ${falta===0&&t.items.length?'done':''}"><i style="width:${t.items.length?pctBar:0}%"></i></div>`;
   const body=$('#cartBody');
   if(!t.items.length){
     body.innerHTML='<div class="c-empty"><div class="big">🛍️</div><p>Tu bolsa está vacía.</p><button class="btn ghost sm" onclick="verCatalogo()">Explorar catálogo</button></div>';
@@ -1425,7 +1416,7 @@ const FAQ=[
   ['¿Los perfumes son originales?','Sí. Todos nuestros perfumes son 100% originales, sellados de fábrica y de distribuidores autorizados.'],
   ['¿Cómo hago mi pedido?',`Arma tu bolsa y pulsa “Pedir por WhatsApp”. Te confirmamos disponibilidad y forma de pago por el mismo chat (${CFG.WA_TXT}).`],
   ['¿Envían a todo México?',`Sí, enviamos a todo el país. El envío es gratis en compras desde ${money0(CFG.ENVIO_GRATIS)} MXN.`],
-  ['¿Cómo funciona el 20% OFF?',`Al agregar ${CFG.PROMO_N} perfumes (o más) a tu bolsa, el ${Math.round(CFG.PROMO_PCT*100)}% de descuento se aplica automáticamente. Si tienes el código ${CFG.CODIGO} se aplica el descuento que más te convenga (no se acumulan).`],
+  ['¿Cómo obtengo el 10% de descuento?',`Suscríbete con tu correo en la ventana de bienvenida y activa el código ${CFG.CODIGO}. El descuento se aplica automáticamente en tu bolsa.`],
   ['¿Cuánto tarda en llegar mi pedido?','Te confirmamos el tiempo estimado por WhatsApp según tu ciudad al momento de cerrar tu pedido.'],
   ['¿Qué pasa si mi pedido llega con algún problema?',`Escríbenos por WhatsApp al ${CFG.WA_TXT} y lo resolvemos contigo.`]
 ];
@@ -1433,7 +1424,7 @@ function abrirInfo(k){
   const c={
     faq:`<h2>Preguntas frecuentes</h2><div class="faq" style="margin-top:14px">${FAQ.map(f=>`<details><summary>${f[0]}</summary><p>${f[1]}</p></details>`).join('')}</div>`,
     envios:`<h2>Envíos y devoluciones</h2><h3>Envíos</h3><p>Enviamos a todo México. Envío gratis en compras desde ${money0(CFG.ENVIO_GRATIS)} MXN. En pedidos menores te confirmamos el costo por WhatsApp.</p><h3>Cómo se confirma</h3><p>Tu pedido se confirma por WhatsApp: validamos disponibilidad, forma de pago y dirección de entrega.</p><h3>Devoluciones y problemas con tu pedido</h3><p>Si algo no llega como esperabas, escríbenos al ${CFG.WA_TXT} y lo resolvemos contigo.</p>`,
-    terminos:`<h2>Términos y condiciones</h2><ul style="margin-top:14px"><li>Los precios están en pesos mexicanos (MXN).</li><li>La disponibilidad se confirma por WhatsApp al momento de tu pedido.</li><li>Los descuentos no se acumulan: se aplica el más conveniente para ti.</li><li>Tus datos solo se usan para atender tu pedido y, si lo aceptas, enviarte novedades. Consulta el <a href="privacidad.html" style="text-decoration:underline">Aviso de Privacidad</a>.</li></ul>`,
+    terminos:`<h2>Términos y condiciones</h2><ul style="margin-top:14px"><li>Los precios están en pesos mexicanos (MXN).</li><li>La disponibilidad se confirma por WhatsApp al momento de tu pedido.</li><li>El código de bienvenida aplica a pedidos hechos por WhatsApp y está sujeto a disponibilidad.</li><li>Tus datos solo se usan para atender tu pedido y, si lo aceptas, enviarte novedades. Consulta el <a href="privacidad.html" style="text-decoration:underline">Aviso de Privacidad</a>.</li></ul>`,
     contacto:`<h2>Contacto</h2><p style="margin-top:14px">WhatsApp: <a style="text-decoration:underline" target="_blank" rel="noopener" href="${waLink('Hola Vita Nova')}">${CFG.WA_TXT}</a></p><p>Correo: <a style="text-decoration:underline" href="mailto:${CFG.EMAIL}">${CFG.EMAIL}</a></p><p>Ubicación: Sonora, México</p><p>Instagram: @vita_nova04 · TikTok: @vita.nova45</p>`
   }[k];
   $('#infoBody').innerHTML=c;abrirModal('infoModal');
